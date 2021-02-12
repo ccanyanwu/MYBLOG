@@ -5,7 +5,9 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var ejsLayouts = require('express-ejs-layouts');
-var moment = require('moment');
+
+var session = require('express-session');
+var expressValidator = require('express-validator');
 
 var routes = require('./routes/index');
 var blog  = require('./routes/blog');
@@ -26,6 +28,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+  secret: 'keyboard cat',
+  resave:false,
+  saveUninitialized:true,
+  cookie: {secure: true}
+}));
+
+//for my validation
 
 app.use('/', routes);
 app.use('/blog', blog);

@@ -2,6 +2,14 @@ var express = require('express');
 var router = express.Router();
 
 
+const flash = require('connect-flash');
+var Author = require('../models/author');
+var models = require('../models');
+const bodyParser = require('body-parser');
+const { check, validationResult } = require('express-validator');
+const urlencodedParser = bodyParser.urlencoded({extended:false});
+
+
 // Require our controllers.
 var author_controller = require('../controllers/authorController');
 var post_controller = require('../controllers/postController'); 
@@ -41,7 +49,41 @@ router.get('/posts', post_controller.post_list);
 router.get('/author/create', author_controller.author_create_get);
 
 // POST request for creating Author.
-router.post('/author/create', author_controller.author_create_post);
+//router.post('/author/create', author_controller.author_create_post);
+
+//first attempt
+router.post('/author/create', urlencodedParser, [
+    check('first_name', 'First name must be valid and not less than 3 characters').exists().isLength({min: 3}),
+    check('last_name', 'Last name must be valid and not less than 3 characters').exists().isLength({min: 3}),
+    check('username', 'Username must be valid and not less than 3 characters').exists().isLength({min: 3}),
+    check('email', 'email is not valid').isEmail().normalizeEmail(),
+    check('password', 'password must be between 7 and 42 characters').isLength({min: 7, max:42})
+] ,(req, res) => {
+    //res.json(req.body);
+    const errors = validationResult(req);
+
+    if(!errors.isEmpty()){
+        //return res.status(422).jsonp(errors.array());
+        const notice = errors.array();
+
+        res.render('forms/author_form', { title: 'Create Author', notice, layout: 'layouts/detail' });
+    }else{
+        models.Author.create({
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            username: req.body.username,
+            email: req.body.email,
+            password: req.body.password,
+            mobile: req.body.mobile
+            }).then(function() {
+            console.log("Author created successfully");
+            // check if there was an error during post creation
+            res.redirect('/blog/authors'); 
+            
+    });
+    }
+});
+
 
 // // GET request to delete Author.
  router.get('/author/:author_id/delete', author_controller.author_delete_get);
